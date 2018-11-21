@@ -506,7 +506,7 @@ function [pixelPositions, bigx, bigy] = ...
     function [ Gauss ] = make_gauss( n,sigma )
         width = -n:1:n;
         G = exp(-width.^2/(sigma)^2);
-        Gauss = norm(G,1);
+        Gauss = G ./ norm(G,1);
     end
 end
 
