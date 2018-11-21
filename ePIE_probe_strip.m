@@ -280,7 +280,7 @@ for itt = 1:iterations
     if save_intermediate == 1 && mod(itt,round(iterations/10)) == 0 && itt < iterations
         big_obj_g = gather(big_obj);
         all_aps_g = gather(all_aps);
-        all_aps_g = squeeze(mean(all_aps(:,:,:,:),4));
+        all_aps_g = squeeze(mean(all_aps_g(:,:,:,:),4));
         save([save_string filename '_itt' num2str(itt) '.mat'],...
             'big_obj_g','all_aps_g','-v7.3');
     end
