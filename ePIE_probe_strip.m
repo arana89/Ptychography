@@ -160,6 +160,7 @@ if gpu == 1
     big_obj = gpuArray(big_obj);
     if update_stripwise == 1
         all_aps = gpuArray(all_aps);
+        new_aps = gpuArray(new_aps);
     else
         aperture = gpuArray(aperture);
     end
