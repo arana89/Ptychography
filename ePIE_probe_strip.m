@@ -23,6 +23,7 @@ aperture = ePIE_inputs(1).InitialAp;
 iterations = ePIE_inputs(1).Iterations;
 saveOutput = ePIE_inputs.saveOutput;
 filename = ePIE_inputs(1).FileName;
+strip_direction = ePIE_inputs(1).strip_direction; %'R' for row-wise strips, 'C' for column-wise
 filename = strcat('reconstruction_ePIE_probe_strip_',filename,'_',jobID);
 filename = strrep(filename,'__','_');
 %% parameter inputs
@@ -80,6 +81,13 @@ if isfield(ePIE_inputs, 'strip_width');
 else
     strip_width = 3;
 end
+if strcmp(strip_direction, 'R') %for tilt-axis = x
+    strip_squeeze = 4;
+elseif strcmp(strip_direction, 'C') %for tilt-axis = y
+    strip_squeeze = 3;
+else
+    error('strip_direction must be either ''R'' or ''C''');
+end
 kernel = make_gauss(strip_width,strip_width);
 clear ePIE_inputs
 
@@ -98,6 +106,7 @@ fprintf('updating probe = %d\n', update_aperture);
 fprintf('positivity = %d\n', do_posi);
 fprintf('probe mask = %d\n', probe_mask_flag);
 fprintf('obj_scale = %f\n', obj_scale);
+fprintf('strip_direction = %s\n', strip_direction);
 fprintf('misc notes: %s\n', miscNotes);
 %% Define parameters from data and for reconstruction
 for ii = 1:size(diffpats,3)
@@ -171,7 +180,7 @@ end
 best_err = 100; % check to make sure saving reconstruction with best error
 
 %% Main ePIE itteration loop
-disp('========beginning reconstruction=======');
+disp('========beginning reconstruction w/ probe strip averaging=======');
 for itt = 1:iterations
     tic;
     for aper = randperm(nApert)
@@ -185,7 +194,7 @@ for itt = 1:iterations
         buffer_rspace = rspace;
         object_max = max(abs(rspace(:))).^2;
         probe_max = max(abs(aperture(:))).^2;
-        
+
 %% Create new exitwave
         buffer_exit_wave = rspace.*(aperture);
         update_exit_wave = buffer_exit_wave;
@@ -196,7 +205,7 @@ for itt = 1:iterations
         k_fill = temp_dp(missing_data);
         temp_dp = current_dp.*exp(1i*angle(temp_dp)); % Replace reconstructed magnitudes with measured magnitudes
         temp_dp(missing_data) = k_fill;
-        
+
 %% Update the object
 
         temp_rspace = ifft2(temp_dp);
@@ -209,7 +218,7 @@ for itt = 1:iterations
         end
         big_obj(Y1(aper):Y2(aper), X1(aper):X2(aper)) = new_rspace;
 %% Update the probe
-        
+
         if update_aperture == 1
 %             if itt > iterations - freeze_aperture
 %                 new_beta_ap = beta_ap*sqrt((iterations-itt)/iterations);
@@ -226,14 +235,14 @@ for itt = 1:iterations
                 all_aps(:,:,ir,ic) = aperture; %put updated aperture into master array
             end
         end 
-        
+
         fourier_error(itt,aper) = sum(sum(abs(current_dp(missing_data ~= 1) - check_dp(missing_data ~= 1))))./sum(sum(current_dp(missing_data ~= 1)));
-             
+
     end
     if  mod(itt,showim) == 0 && imout == 1;
-        
+
         figure(3)
-        
+
         hsv_big_obj = make_hsv(big_obj,1);
         hsv_aper = make_hsv(aperture,1);
         subplot(2,2,1)
@@ -247,48 +256,64 @@ for itt = 1:iterations
         subplot(2,2,4)
         imagesc(log(fftshift(check_dp))); axis image
         drawnow 
-        
-        
-        
         %         drawnow
         %         writeVideo(writerObj,getframe(h)); % take screen shot
-        
     end
-      
-     mean_err = sum(fourier_error(itt,:),2)/nApert;
+
+    mean_err = sum(fourier_error(itt,:),2)/nApert;
+    
     if best_err > mean_err
         best_obj = big_obj;
         best_err = mean_err;
     end
-    
+
     if update_stripwise == 1
-        %averaging probes along horizontal strips of width (2*strip_width+1)
-        for pos = 1:n_strip_R
-            if pos > strip_width && pos < (n_strip_R - strip_width)
-                temp_aps = mean(all_aps(:,:,pos-strip_width:pos+strip_width,:),4);
-                %normalized gaussian weighting
-                for iii = 1:(2*strip_width + 1)
-                    temp_aps(:,:,iii) = temp_aps(:,:,iii) .* kernel(iii);
+        
+        switch strip_direction
+            case 'R'
+                %averaging probes along horizontal strips of width (2*strip_width+1)
+                for pos = 1:n_strip_R
+                    if pos > strip_width && pos < (n_strip_R - strip_width)
+                        temp_aps = mean(all_aps(:,:,pos-strip_width:pos+strip_width,:),strip_squeeze);
+                        %normalized gaussian weighting
+                        for iii = 1:(2*strip_width + 1)
+                            temp_aps(:,:,iii) = temp_aps(:,:,iii) .* kernel(iii);
+                        end
+                        new_aps(:,:,pos-strip_width:pos+strip_width,:) = repmat(sum(temp_aps,3),[1 1 2*strip_width+1 n_strip_C]);
+                    end
                 end
-                new_aps(:,:,pos-strip_width:pos+strip_width,:) = repmat(sum(temp_aps,3),[1 1 2*strip_width+1 n_strip_C]);
-            end
+                
+            case 'C'
+                %averaging probes along vertical strips of width (2*strip_width+1)
+                for pos = 1:n_strip_C
+                    if pos > strip_width && pos < (n_strip_C - strip_width)
+                        temp_aps = squeeze(mean(all_aps(:,:,:,pos-strip_width:pos+strip_width),strip_squeeze));
+                        %normalized gaussian weighting
+                        for iii = 1:(2*strip_width + 1)
+                            temp_aps(:,:,iii) = temp_aps(:,:,iii) .* kernel(iii);
+                        end
+                        new_aps(:,:,:,pos-strip_width:pos+strip_width) = repmat(sum(temp_aps,3),[1 1 n_strip_R 2*strip_width+1]);
+                    end
+                end
         end
+        
     end
-    
+
     all_aps = new_aps;
-    
+
     if save_intermediate == 1 && mod(itt,round(iterations/10)) == 0 && itt < iterations
         big_obj_g = gather(big_obj);
         all_aps_g = gather(all_aps);
-        all_aps_g = squeeze(mean(all_aps_g(:,:,:,:),4));
+        all_aps_g = squeeze(mean(all_aps_g(:,:,:,:),strip_squeeze));
         save([save_string filename '_itt' num2str(itt) '.mat'],...
             'big_obj_g','all_aps_g','-v7.3');
     end
-    
+
 t1 = toc; 
 fprintf('%d. Error = %f\n time elapsed %f s\n',itt,mean_err, t1);
 fprintf('\n');
 end
+
 
 disp('======reconstruction finished=======')
 drawnow
@@ -297,7 +322,7 @@ fourier_error = gather(fourier_error);
 best_obj = gather(best_obj);
 all_aps = gather(all_aps);
 
-all_aps = squeeze(mean(all_aps(:,:,:,:),4));
+all_aps = squeeze(mean(all_aps(:,:,:,:),strip_squeeze));
 
 if saveOutput == 1
     save([save_string 'best_obj_' filename '.mat'],'best_obj','all_aps','initial_obj','initial_aperture','fourier_error');
