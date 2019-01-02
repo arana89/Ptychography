@@ -80,8 +80,8 @@ freeze_aperture = Inf;
 %% print parameters
 fprintf('filename = %s\n', filename);
 fprintf('iterations = %d\n', iterations);
-fprintf('beta probe = %0.1f\n', beta_ap);
-fprintf('beta obj = %0.1f\n', beta_obj);
+fprintf('beta probe = %0.5f\n', beta_ap);
+fprintf('beta obj = %0.5f\n', beta_obj);
 fprintf('gpu flag = %d\n', gpu);
 fprintf('initial probe radius = %f\n', aperture_radius);
 fprintf('updating probe = %d\n', update_aperture);
