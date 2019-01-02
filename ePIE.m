@@ -78,6 +78,7 @@ optional_args(1:nva) = varargin;
 [beta_obj, beta_ap] = optional_args{:};
 freeze_aperture = Inf;
 %% print parameters
+fprintf('filename = %s\n', filename);
 fprintf('iterations = %d\n', iterations);
 fprintf('beta probe = %0.1f\n', beta_ap);
 fprintf('beta obj = %0.1f\n', beta_obj);
