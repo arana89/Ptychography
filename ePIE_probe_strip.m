@@ -97,6 +97,7 @@ optional_args(1:nva) = varargin;
 [beta_obj, beta_ap] = optional_args{:};
 freeze_aperture = Inf;
 %% print parameters
+fprintf('filename = %s\n', filename);
 fprintf('iterations = %d\n', iterations);
 fprintf('beta probe = %0.1f\n', beta_ap);
 fprintf('beta obj = %0.1f\n', beta_obj);
@@ -107,6 +108,7 @@ fprintf('positivity = %d\n', do_posi);
 fprintf('probe mask = %d\n', probe_mask_flag);
 fprintf('obj_scale = %f\n', obj_scale);
 fprintf('strip_direction = %s\n', strip_direction);
+fprintf('strip_width = %d\n', strip_width);
 fprintf('misc notes: %s\n', miscNotes);
 %% Define parameters from data and for reconstruction
 for ii = 1:size(diffpats,3)
