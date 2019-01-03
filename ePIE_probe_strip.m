@@ -275,7 +275,7 @@ for itt = 1:iterations
             case 'R'
                 %averaging probes along horizontal strips of width (2*strip_width+1)
                 for pos = 1:n_strip_R
-                    if pos > strip_width && pos < (n_strip_R - strip_width)
+                    if pos > strip_width && pos <= (n_strip_R - strip_width)
                         temp_aps = mean(all_aps(:,:,pos-strip_width:pos+strip_width,:),strip_squeeze);
                         %normalized gaussian weighting
                         for iii = 1:(2*strip_width + 1)
@@ -288,7 +288,7 @@ for itt = 1:iterations
             case 'C'
                 %averaging probes along vertical strips of width (2*strip_width+1)
                 for pos = 1:n_strip_C
-                    if pos > strip_width && pos < (n_strip_C - strip_width)
+                    if pos > strip_width && pos <= (n_strip_C - strip_width)
                         temp_aps = squeeze(mean(all_aps(:,:,:,pos-strip_width:pos+strip_width),strip_squeeze));
                         %normalized gaussian weighting
                         for iii = 1:(2*strip_width + 1)
