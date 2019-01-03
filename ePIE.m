@@ -83,11 +83,11 @@ fprintf('iterations = %d\n', iterations);
 fprintf('beta probe = %0.5f\n', beta_ap);
 fprintf('beta obj = %0.5f\n', beta_obj);
 fprintf('gpu flag = %d\n', gpu);
-fprintf('initial probe radius = %f\n', aperture_radius);
+fprintf('initial probe radius = %e\n', aperture_radius);
 fprintf('updating probe = %d\n', update_aperture);
 fprintf('positivity = %d\n', do_posi);
 fprintf('probe mask = %d\n', probe_mask_flag);
-fprintf('obj_scale = %f\n', obj_scale);
+fprintf('obj_scale = %e\n', obj_scale);
 fprintf('misc notes: %s\n', miscNotes);
 %% Define parameters from data and for reconstruction
 for ii = 1:size(diffpats,3)
